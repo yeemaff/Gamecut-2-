@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GameCut — คัดช็อตเด็ด</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0f14; --panel:#151821; --panel2:#1b1f2a; --line:#262b38; --line2:#323848;
+  --text:#e7e9ee; --dim:#9aa1b2; --faint:#646b7d;
+  --accent:#7cf29a; --accent-ink:#06210f; --accent2:#5ab0ff; --hot:#ff7a45; --warn:#ffb547; --bad:#ff6b6b;
+  --r:10px;
+  --sans:"IBM Plex Sans Thai",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans)}
+button,input,select{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:370px 1fr;min-height:100vh}
+@media(max-width:920px){.app{grid-template-columns:1fr}}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:18px 18px 40px;overflow-y:auto;max-height:100vh;position:sticky;top:0}
+@media(max-width:920px){aside{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line)}}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink);font-weight:700}
+.brand h1{font-size:19px;margin:0}
+.brand small{color:var(--faint);font-size:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 16px}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--line2);color:var(--dim)}
+.chip.ok{border-color:#2c5a3a;color:var(--accent)} .chip.no{border-color:#5a2c2c;color:var(--bad)}
+.step{border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);padding:14px;margin-bottom:12px}
+.step h2{font-size:14px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.num{width:22px;height:22px;border-radius:6px;background:var(--line2);display:grid;place-items:center;font-size:12px;font-family:var(--mono);color:var(--dim)}
+.step.done .num{background:var(--accent);color:var(--accent-ink)}
+.hint{color:var(--faint);font-size:12px;margin:6px 0 0}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+.btn{border:1px solid var(--line2);background:#222736;border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap;transition:.15s}
+.btn:hover{border-color:#4a5268;background:#272d3e}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.big{width:100%;padding:12px;font-size:15px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent}
+input[type=text],select,input[type=number]{width:100%;background:#10131a;border:1px solid var(--line2);border-radius:8px;padding:7px 10px;outline:none}
+input:focus,select:focus{border-color:var(--accent2)}
+.srclist{list-style:none;margin:10px 0 0;padding:0;max-height:240px;overflow:auto}
+.srclist li{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:7px;background:#11141c;margin-bottom:4px;font-size:12.5px;cursor:pointer;border:1px solid transparent}
+.srclist li.on{border-color:var(--accent2)}
+.srclist .n{font-family:var(--mono);color:var(--accent);min-width:18px}
+.srclist .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srclist .meta{color:var(--faint);font-family:var(--mono);font-size:11px;white-space:nowrap}
+.x{border:0;background:none;color:var(--faint);cursor:pointer;font-size:15px;padding:0 4px}
+.x:hover{color:var(--bad)}
+.field{display:grid;grid-template-columns:1fr 118px;gap:8px;align-items:center;margin:8px 0;font-size:12.5px}
+.field label{color:var(--dim)}
+.field .val{font-family:var(--mono);font-size:11.5px;text-align:right}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.check{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--dim);margin:7px 0;cursor:pointer}
+.check input{accent-color:var(--accent);width:15px;height:15px}
+.big-val{font-family:var(--mono);font-size:26px;font-weight:600;text-align:center;margin:2px 0 4px}
+.big-val small{font-size:12px;color:var(--faint);font-weight:400;font-family:var(--sans)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:#10131a;border:1px solid var(--line2);border-radius:9px;padding:3px}
+.seg button{border:0;background:none;border-radius:7px;padding:6px 4px;cursor:pointer;color:var(--dim);font-size:12.5px}
+.seg button.on{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.card{border:1px solid var(--line2);background:#10131a;border-radius:9px;padding:8px 4px 6px;cursor:pointer;text-align:center;font-size:11.5px;color:var(--dim);line-height:1.3}
+.card.on{border-color:var(--accent);color:var(--text);background:#13241a}
+.card i{display:block;margin:0 auto 6px;border:2px solid currentColor;border-radius:3px}
+.card small{display:block;font-family:var(--mono);font-size:10px;color:var(--faint)}
+.sub{font-size:12px;color:var(--dim);margin:10px 0 4px}
+
+main{padding:22px 26px 60px;min-width:0}
+.empty{border:1px dashed var(--line2);border-radius:14px;padding:46px 30px;text-align:center;color:var(--dim);margin-top:20px}
+.empty h3{color:var(--text);margin:0 0 6px;font-size:18px}
+.flow{display:flex;justify-content:center;gap:10px;margin-top:22px;flex-wrap:wrap}
+.flow div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:12.5px;min-width:150px;max-width:200px;text-align:left}
+.flow b{display:block;color:var(--accent);font-family:var(--mono);font-size:11px;margin-bottom:2px}
+.progress{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:18px}
+.progress .top{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.bar{height:8px;background:#0f1218;border-radius:99px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .3s}
+.progress .msg{color:var(--faint);font-size:12px;margin-top:6px;min-height:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tab{border:1px solid var(--line2);background:var(--panel);border-radius:9px;padding:7px 12px;cursor:pointer;font-size:13px;color:var(--dim);display:flex;gap:8px;align-items:center}
+.tab.on{border-color:var(--accent);color:var(--text)}
+.tab .c{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-size:20px;font-family:var(--mono);font-weight:600}
+.stat span{color:var(--faint);font-size:12px}
+.graphbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px 8px;margin-bottom:14px;position:relative}
+.graphbox .gh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12.5px;color:var(--dim);gap:10px;flex-wrap:wrap}
+.legend{display:flex;gap:12px;font-size:11.5px;color:var(--faint)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+svg.graph{width:100%;height:150px;display:block;cursor:crosshair}
+.gscale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px}
+.gtip{position:absolute;pointer-events:none;background:#000c;border:1px solid var(--line2);border-radius:6px;padding:2px 7px;font-family:var(--mono);font-size:11px;display:none;white-space:nowrap}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.spacer{flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.shot{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden;position:relative}
+.shot:hover{border-color:var(--line2)}
+.shot.hl{border-color:var(--accent2)}
+.shot .im{position:relative;aspect-ratio:16/9;background:#07080b;cursor:pointer;overflow:hidden}
+.shot .im img{width:100%;height:100%;object-fit:cover;display:block}
+.shot .no{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.75);font-family:var(--mono);font-size:11px;padding:0 6px;border-radius:4px}
+.shot .du{position:absolute;right:6px;top:6px;background:rgba(0,0,0,.75);font-family:var(--mono);font-size:11px;padding:0 6px;border-radius:4px}
+.shot .man{position:absolute;left:6px;bottom:6px;background:var(--accent2);color:#04121f;font-size:10.5px;font-weight:600;padding:0 6px;border-radius:4px}
+.shot .play{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;opacity:0;transition:.15s;background:rgba(0,0,0,.25)}
+.shot .im:hover .play{opacity:1}
+.shot .info{padding:8px 10px 4px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.heat{height:4px;background:#0f1218;margin:0 10px;border-radius:99px;overflow:hidden}
+.heat i{display:block;height:100%;background:linear-gradient(90deg,#3a6fa8,var(--accent),var(--hot))}
+.shot .acts{display:flex;gap:4px;padding:8px 8px 9px}
+.shot .acts button{flex:1;border:1px solid var(--line2);background:#1d212c;border-radius:7px;padding:4px 0;cursor:pointer;font-size:12px;color:var(--dim)}
+.shot .acts button:hover{color:var(--text);border-color:#4a5268}
+.shot .acts button.del:hover{color:var(--bad);border-color:#6a2a2a}
+.exportbar{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 24%);padding-top:26px;margin-top:20px}
+.exportbar .box{background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:14px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.exportbar .sum{font-size:13px;color:var(--dim)}
+.exportbar .sum b{color:var(--text)}
+.expdone{background:#11261a;border:1px solid #2c5a3a;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.expdone code{font-family:var(--mono);font-size:12px;color:var(--accent);word-break:break-all}
+.modal{position:fixed;inset:0;background:rgba(5,6,10,.85);display:none;place-items:center;z-index:50;padding:20px}
+.modal.on{display:grid}
+.modal .in{width:min(1000px,100%);background:var(--panel);border:1px solid var(--line2);border-radius:12px;overflow:hidden}
+.modal video{display:block;width:100%;max-height:68vh;background:#000}
+.modal .cap{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;font-size:12.5px;color:var(--dim);align-items:center;flex-wrap:wrap}
+.modal .cap code{font-family:var(--mono)}
+.cmp{background:#000;display:flex;justify-content:center}
+.cmp .cw{position:relative;display:inline-block;max-width:100%}
+.cmp img{display:block;max-width:100%;max-height:72vh}
+.cmp .lb{position:absolute;top:10px;background:rgba(0,0,0,.7);padding:2px 10px;border-radius:6px;font-size:12.5px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2a1414;border:1px solid #6a2a2a;color:#ffc4c4;padding:10px 16px;border-radius:10px;z-index:60;display:none;max-width:80vw;white-space:pre-wrap;font-size:13px}
+.toast.ok{background:#11261a;border-color:#2c5a3a;color:#bff5cf}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="brand"><div class="logo">GC</div><div><h1>GameCut</h1><small>คัดช็อตเด็ดจากฟุตเทจเกมยาวๆ</small></div></div>
+  <div class="chips" id="chips"></div>
+
+  <section class="step" id="st1">
+    <h2><span class="num">1</span>ฟุตเทจเกม</h2>
+    <div class="row">
+      <button class="btn" onclick="pickFootage('footage_folder')">📁 เลือกโฟลเดอร์</button>
+      <button class="btn" onclick="pickFootage('footage_files')">🎞 เลือกไฟล์</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <input type="text" id="srcPath" placeholder="หรือวาง path ไฟล์/โฟลเดอร์">
+      <button class="btn" style="flex:0" onclick="addPath()">เพิ่ม</button>
+    </div>
+    <ul class="srclist" id="srcList"></ul>
+    <p class="hint">ใส่ได้หลายไฟล์ เรียงตามเลขชื่อไฟล์ (1, 2, 3…) — แต่ละไฟล์จะได้คลิปไฮไลต์ของตัวเอง</p>
+  </section>
+
+  <section class="step done">
+    <h2><span class="num">2</span>ความยาวไฮไลต์</h2>
+    <div class="big-val"><span id="tlenV"></span> <small>ต่อ 1 ไฟล์</small></div>
+    <input type="range" min="20" max="300" step="10" data-k="target_len">
+    <div class="field"><label>ช็อตสั้นสุด (วิ)</label><input type="number" min="1" max="20" step="0.5" data-k="shot_min"></div>
+    <div class="field"><label>ช็อตยาวสุด (วิ)<br><span class="hint">ฉากที่มันส์ต่อเนื่องจะได้ช็อตยาวขึ้น</span></label><input type="number" min="1.5" max="30" step="0.5" data-k="shot_max"></div>
+    <div class="sub">กระจายช็อตทั่วไฟล์</div>
+    <div class="seg" data-seg="spread"><button data-v="low">น้อย</button><button data-v="mid">กลาง</button><button data-v="high">มาก</button></div>
+    <p class="hint" style="margin-top:4px">น้อย = เอาเฉพาะฉากที่มันส์ที่สุด (อาจกองอยู่ช่วงเดียว) · มาก = เกลี่ยทั่วทั้งไฟล์</p>
+    <div class="sub">เรียงช็อต</div>
+    <div class="seg" data-seg="order"><button data-v="chrono">ตามเวลาในเกม</button><button data-v="score">มันส์สุดขึ้นก่อน</button></div>
+    <label class="check" style="margin-top:10px"><input type="checkbox" data-k="fill"> เติมให้ครบความยาว (ยอมใช้ฉากธรรมดา)</label>
+    <p class="hint" style="margin-top:-2px">ปิดไว้ = เอาเฉพาะช็อตที่มันส์กว่าค่าเฉลี่ย ถ้าฟุตเทจมีฉากเด็ดไม่พอ คลิปจะสั้นกว่าเป้า (ดีกว่าเอาหน้าเมนูมาเติม)</p>
+    <details style="margin-top:8px"><summary class="hint" style="cursor:pointer">ข้ามช่วงต้น/ท้ายไฟล์</summary>
+      <div class="field"><label>ข้ามต้นไฟล์ (วิ)</label><input type="number" min="0" step="5" data-k="skip_head"></div>
+      <div class="field"><label>ข้ามท้ายไฟล์ (วิ)</label><input type="number" min="0" step="5" data-k="skip_tail"></div>
+    </details>
+  </section>
+
+  <section class="step done">
+    <h2><span class="num">3</span>✨ ทำให้ภาพชัดขึ้น</h2>
+    <div class="seg" data-seg="enhance"><button data-v="off">ปิด</button><button data-v="light">เบา</button><button data-v="medium">กลาง</button><button data-v="strong">แรง</button></div>
+    <p class="hint" id="enhHint"></p>
+    <div class="field"><label>ขยายความละเอียด<br><span class="hint">เฉพาะไฟล์ที่เล็กกว่านี้</span></label>
+      <select data-k="upscale"><option value="none">ไม่ขยาย</option><option value="1080">1080p</option><option value="1440">1440p (2K)</option><option value="2160">2160p (4K)</option></select></div>
+    <button class="btn" style="width:100%" onclick="openCompare()">🔍 ดูภาพเทียบ ก่อน / หลัง</button>
+  </section>
+
+  <section class="step done">
+    <h2><span class="num">4</span>รูปแบบภาพ</h2>
+    <div class="cards" id="frames">
+      <div class="card" data-f="original"><i style="width:34px;height:19px"></i>ตามต้นฉบับ<small id="origSize">16:9</small></div>
+      <div class="card" data-f="1080x1920"><i style="width:13px;height:23px;margin-bottom:2px"></i>Reel / Shorts<small>1080×1920</small></div>
+      <div class="card" data-f="1080x1080"><i style="width:20px;height:20px;margin-bottom:5px"></i>สี่เหลี่ยม<small>1080×1080</small></div>
+    </div>
+    <div id="rfBox" class="hide">
+      <div class="sub">วิธีจัดภาพแนวนอนลงเฟรม</div>
+      <div class="seg" data-seg="reframe"><button data-v="crop">ครอปเต็มจอ</button><button data-v="blur">พื้นหลังเบลอ</button><button data-v="fit">ขอบดำ</button></div>
+      <div class="field" id="posF"><label>ตำแหน่งครอป<br><span class="hint">ซ้าย ← กลาง → ขวา</span></label><div><input type="range" min="0" max="1" step="0.01" data-k="crop_pos"><div class="val" data-v="crop_pos"></div></div></div>
+      <div class="field" id="zoomF"><label>ซูมภาพหลัก</label><div><input type="range" min="1" max="2" step="0.05" data-k="blur_zoom"><div class="val" data-v="blur_zoom"></div></div></div>
+    </div>
+  </section>
+
+  <section class="step done">
+    <h2><span class="num">5</span>ส่งออก</h2>
+    <label class="check"><input type="checkbox" data-k="export_reel"> คลิปไฮไลต์รวม (ต่อ 1 ไฟล์ฟุตเทจ)</label>
+    <label class="check"><input type="checkbox" data-k="export_shots"> ไฟล์แยกทุกช็อต</label>
+    <label class="check"><input type="checkbox" data-k="combine"> รวมไฮไลต์ทุกไฟล์เป็นคลิปเดียว</label>
+    <label class="check"><input type="checkbox" data-k="audio"> เก็บเสียงเกมไว้ในไฟล์</label>
+    <div class="field"><label>ไฟล์วิดีโอ</label><select data-k="codec"><option value="h264">MP4 (H.264)</option><option value="prores">MOV (ProRes — ตัดต่อลื่น ไฟล์ใหญ่)</option></select></div>
+    <div class="field"><label>เก็บไว้ที่</label><button class="btn sm" onclick="pickOut()">เลือกโฟลเดอร์</button></div>
+    <div class="hint" id="outPath" style="word-break:break-all"></div>
+  </section>
+
+  <button class="btn primary big" id="goBtn" onclick="analyze()">🔎 หาช็อตเด็ด</button>
+  <p class="hint" style="text-align:center">สแกนแต่ละไฟล์ครั้งเดียว — เปลี่ยนตั้งค่าแล้วคัดใหม่ได้ทันที</p>
+</aside>
+
+<main>
+  <div class="progress hide" id="prog">
+    <div class="top"><b id="progStage">กำลังทำงาน…</b><button class="btn sm" onclick="cancelJob()">ยกเลิก</button></div>
+    <div class="bar"><i id="progBar"></i></div>
+    <div class="msg" id="progMsg"></div>
+  </div>
+
+  <div id="emptyView" class="empty">
+    <h3>เลือกฟุตเทจเกมทางซ้าย แล้วกด “หาช็อตเด็ด”</h3>
+    <div>เช่น ฟุตเทจ 1 ชั่วโมง → คลิปไฮไลต์ 1–2 นาที พร้อมไฟล์แยกทุกช็อต ลากเข้า Premiere ได้เลย</div>
+    <div class="flow">
+      <div><b>🎬 ภาพ</b>หาฉากที่เคลื่อนไหวเยอะ — ต่อสู้ แอคชั่น กล้องหมุนเร็ว</div>
+      <div><b>🔊 เสียงเกม</b>หาช่วงที่ดังขึ้นกะทันหัน — ระเบิด ตีบอส</div>
+      <div><b>🚫 ข้ามอัตโนมัติ</b>จอโหลด เมนู pause ฉากนิ่งๆ</div>
+      <div><b>📏 กระจาย</b>เกลี่ยช็อตให้ทั่วไฟล์ ไม่กองอยู่ฉากเดียว</div>
+    </div>
+  </div>
+
+  <div id="resultView" class="hide">
+    <div class="tabs" id="tabs"></div>
+    <div class="summary" id="summary"></div>
+    <div class="graphbox">
+      <div class="gh"><span>📈 กราฟความมันส์ทั้งไฟล์ — <b style="color:var(--text)">คลิกที่กราฟ</b> เพื่อดูช่วงนั้น และเพิ่มเป็นช็อตเองได้</span>
+        <span class="legend"><span><i style="background:var(--accent)"></i>ช็อตที่เลือก</span><span><i style="background:#3a3f4d"></i>ข้าม (โหลด/เมนู/ภาพค้าง)</span></span></div>
+      <svg class="graph" id="graph" viewBox="0 0 1000 150" preserveAspectRatio="none"></svg>
+      <div class="gscale" id="gscale"></div>
+      <div class="gtip" id="gtip"></div>
+    </div>
+    <div class="toolbar">
+      <button class="btn sm" onclick="playAll()">▶ ดูไฮไลต์ทั้งหมดต่อกัน</button>
+      <button class="btn sm" onclick="repick(true)" title="คัดใหม่ทั้งหมด (ล้างช็อตที่ลบ/เพิ่มเอง)">🔄 คัดใหม่</button>
+      <span class="spacer"></span>
+      <span class="hint" style="margin:0">↻ = สลับเป็นช็อตอื่นที่มันส์รองลงมา · −/+ = ปรับความยาว</span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="exportbar">
+      <div class="box">
+        <div class="sum" id="expSum"></div>
+        <span class="spacer"></span>
+        <button class="btn primary" id="expBtn" onclick="doExport()">⬇ ส่งออกวิดีโอ</button>
+      </div>
+      <div id="expDone"></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<div class="modal" id="vmodal" onclick="if(event.target===this)closeV()">
+  <div class="in">
+    <video id="vid" controls playsinline></video>
+    <div class="cap"><span id="vcap"></span>
+      <span class="row" style="flex:0;gap:6px"><button class="btn sm primary hide" id="addHere" onclick="addHere()">➕ เพิ่มช่วงนี้เป็นช็อต</button>
+      <button class="btn sm" onclick="closeV()">ปิด</button></span></div>
+  </div>
+</div>
+<div class="modal" id="cmodal" onclick="if(event.target===this)closeC()">
+  <div class="in">
+    <div class="cmp"><div class="cw"><img id="cimg" alt=""><span class="lb" style="left:10px">ก่อน</span><span class="lb" style="left:calc(50% + 10px)">หลัง ✨</span></div></div>
+    <div class="cap"><span id="ccap"></span>
+      <span class="row" style="flex:0;gap:6px">
+        <span class="seg" data-seg="enhance" style="min-width:260px"><button data-v="off">ปิด</button><button data-v="light">เบา</button><button data-v="medium">กลาง</button><button data-v="strong">แรง</button></span>
+        <button class="btn sm" onclick="closeC()">ปิด</button></span></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let S=null, cur=0, polling=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function tc(sec){ sec=Math.max(0,sec||0); const h=Math.floor(sec/3600), m=Math.floor(sec/60)%60, s=sec-Math.floor(sec/60)*60;
+  return h? `${h}:${String(m).padStart(2,'0')}:${s.toFixed(0).padStart(2,'0')}` : `${m}:${s.toFixed(1).padStart(4,'0')}`; }
+function dur(sec){ sec=Math.round(sec); const m=Math.floor(sec/60), s=sec%60; return m? `${m}:${String(s).padStart(2,'0')} นาที` : `${s} วิ`; }
+function toast(msg,ok=false){ const t=$('toast'); t.textContent=msg; t.className='toast'+(ok?' ok':''); t.style.display='block';
+  clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none', ok?2500:6000); }
+async function api(path, body){
+  const r = await fetch(path, body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({error:'เชื่อมต่อแอพไม่ได้ — หน้าต่าง Terminal ของ GameCut ยังเปิดอยู่ไหม?'}));
+  if (!r.ok || j.error){ if (j.error && j.error!=='cancel') toast(j.error); throw new Error(j.error||r.status); }
+  return j;
+}
+const ENH_HINT = {
+  off:'ไม่ปรับภาพ — ตัดอย่างเดียว (เร็วสุด)',
+  light:'ลด noise เล็กน้อย + เพิ่มความคม — สำหรับฟุตเทจที่ดีอยู่แล้ว',
+  medium:'ลบรอยบล็อกจากการบีบอัด + ลด noise + คมขึ้น + สีสดขึ้นนิด — เหมาะกับไฟล์บิตเรตต่ำ / โหลดจากเว็บ',
+  strong:'ลบรอยบล็อก/แถบสีเต็มที่ + คมขึ้นมาก — สำหรับฟุตเทจเก่า/ไฟล์เล็ก (ช้ากว่า)'};
+const PICK_KEYS = ['target_len','shot_min','shot_max','spread','order','skip_head','skip_tail','fill'];
+
+async function load(){ S = await api('/api/state'); render(); const j = await api('/api/job'); if (j.running) startPolling(); }
+
+function render(){
+  $('chips').innerHTML = `<span class="chip ${S.ffmpeg?'ok':'no'}">ffmpeg ${S.ffmpeg?'✓':'✗'}</span><span class="chip">v${S.version}</span>`;
+  if (cur >= S.sources.length) cur = 0;
+  $('srcList').innerHTML = S.sources.map((s,i)=>`<li class="${i===cur?'on':''}" onclick="selFile(${i})"><span class="n">${i+1}.</span>
+    <span class="nm" title="${esc(s.path)}">${esc(s.name)}</span>
+    <span class="meta">${tc(s.duration)} · ${s.height}p${s.analyzed?` · <span style="color:var(--accent)">✓ ${s.shots.length} ช็อต</span>`:''}</span>
+    <button class="x" onclick="event.stopPropagation();removeSrc(${i})">×</button></li>`).join('');
+  $('st1').classList.toggle('done', S.sources.length>0);
+  // settings
+  document.querySelectorAll('[data-k]').forEach(el=>{ const v=S.settings[el.dataset.k];
+    if (el.type==='checkbox') el.checked=!!v; else if (document.activeElement!==el) el.value=v; });
+  document.querySelectorAll('[data-v]').forEach(el=>{ if(el.tagName!=='BUTTON') el.textContent=S.settings[el.dataset.v]; });
+  document.querySelectorAll('[data-seg]').forEach(seg=>seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', S.settings[seg.dataset.seg]===b.dataset.v)));
+  $('tlenV').textContent = dur(S.settings.target_len);
+  $('enhHint').textContent = ENH_HINT[S.settings.enhance];
+  document.querySelectorAll('#frames .card').forEach(c=>c.classList.toggle('on', c.dataset.f===S.settings.frame));
+  const s0 = S.sources[cur];
+  $('origSize').textContent = s0 ? `${S.sizes[cur][0]}×${S.sizes[cur][1]}` : '16:9';
+  $('rfBox').classList.toggle('hide', S.settings.frame==='original');
+  $('posF').classList.toggle('hide', S.settings.reframe==='fit');
+  $('zoomF').classList.toggle('hide', S.settings.reframe!=='blur');
+  $('outPath').textContent = S.output ? '📂 '+S.output : '';
+  renderResults();
+}
+
+function selFile(i){ cur=i; render(); }
+
+function renderResults(){
+  const any = S.sources.some(s=>s.analyzed);
+  $('emptyView').classList.toggle('hide', any);
+  $('resultView').classList.toggle('hide', !any);
+  if (!any) return;
+  $('tabs').innerHTML = S.sources.map((s,i)=>`<div class="tab ${i===cur?'on':''}" onclick="selFile(${i})">${i+1}. ${esc(s.name.replace(/\.[^.]+$/,''))}
+     <span class="c">${s.analyzed? `${s.shots.length} ช็อต · ${dur(s.total)}` : 'ยังไม่สแกน'}</span></div>`).join('');
+  const s = S.sources[cur];
+  if (!s || !s.analyzed){ $('summary').innerHTML=''; $('graph').innerHTML=''; $('grid').innerHTML='<p class="hint">ไฟล์นี้ยังไม่ได้สแกน — กด “หาช็อตเด็ด”</p>'; renderExportSum(); return; }
+  const [W,H] = S.sizes[cur];
+  $('summary').innerHTML = [
+    [dur(s.total), s.total < S.settings.target_len - 3 && !S.settings.fill
+       ? `ไฮไลต์ (เป้า ${dur(S.settings.target_len)}) — ฉากเด็ดมีเท่านี้`
+       : `ไฮไลต์ (เป้า ${dur(S.settings.target_len)})`],
+    [s.shots.length, 'ช็อต'],
+    [tc(s.duration), 'ฟุตเทจต้นฉบับ'],
+    [`${s.bad_pct}%`, 'ข้ามไป (โหลด/เมนู/ภาพค้าง)'],
+    [`${W}×${H}`, `ส่งออก${S.settings.enhance!=='off'?' ✨':''}`],
+  ].map(([b,t])=>`<div class="stat"><b>${b}</b><span>${t}</span></div>`).join('')
+   + (s.audio_used ? '' : `<div class="stat"><b style="font-size:14px;color:var(--warn)">ไม่มีเสียงเกม</b><span>วิเคราะห์จากภาพอย่างเดียว</span></div>`);
+  renderGraph(s);
+  renderShots(s);
+  renderExportSum();
+}
+
+function renderGraph(s){
+  const g = s.graph; if (!g) return;
+  const n = g.v.length, Wd = 1000, Hg = 150, pad = 6;
+  const x = i => i/(n-1||1)*Wd;
+  let bad = '';
+  for (let i=0;i<n;i++) if (g.bad[i]){ let j=i; while(j<n && g.bad[j]) j++; bad += `<rect x="${x(i)}" y="0" width="${Math.max(1,x(j)-x(i))}" height="${Hg}" fill="#262a35"/>`; i=j; }
+  const pts = g.v.map((v,i)=>`${x(i).toFixed(1)},${(Hg-pad-v*(Hg-2*pad)).toFixed(1)}`).join(' ');
+  const T = s.duration;
+  const shots = s.shots.map(sh=>{ const a=sh.start/T*Wd, b=sh.end/T*Wd;
+    return `<rect class="sr" data-id="${sh.id}" x="${a}" y="0" width="${Math.max(2,b-a)}" height="${Hg}" fill="rgba(124,242,154,.28)" stroke="var(--accent)" stroke-width="1"/>`; }).join('');
+  $('graph').innerHTML = `<defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a45" stop-opacity=".85"/><stop offset=".5" stop-color="#7cf29a" stop-opacity=".45"/><stop offset="1" stop-color="#3a6fa8" stop-opacity=".15"/></linearGradient></defs>
+    ${bad}<polygon points="0,${Hg} ${pts} ${Wd},${Hg}" fill="url(#gg)"/><polyline points="${pts}" fill="none" stroke="#9fd8ff" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+    ${shots}<line id="gcur" x1="-5" x2="-5" y1="0" y2="${Hg}" stroke="#fff" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+  $('gscale').innerHTML = [0,.25,.5,.75,1].map(f=>`<span>${tc(T*f)}</span>`).join('');
+}
+function graphT(e){ const r=$('graph').getBoundingClientRect(); const f=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width)); return {t:f*S.sources[cur].duration, px:e.clientX-r.left+14}; }
+$('graph').addEventListener('mousemove', e=>{ if(!S||!S.sources[cur]) return; const {t,px}=graphT(e); const tip=$('gtip');
+  tip.style.display='block'; tip.style.left=px+'px'; tip.style.top='44px'; tip.textContent=tc(t);
+  const l=$('gcur'); if(l){ const x=t/S.sources[cur].duration*1000; l.setAttribute('x1',x); l.setAttribute('x2',x); } });
+$('graph').addEventListener('mouseleave', ()=>{ $('gtip').style.display='none'; });
+$('graph').addEventListener('click', e=>{
+  const id = e.target.dataset && e.target.dataset.id;
+  if (id!==undefined){ const sh=S.sources[cur].shots[+id]; const el=document.querySelector(`.shot[data-id="${id}"]`);
+    if (el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.classList.add('hl'); setTimeout(()=>el.classList.remove('hl'),1500); } return; }
+  const {t}=graphT(e); openAt(t);
+});
+
+function renderShots(s){
+  const max = Math.max(...s.shots.map(x=>x.score), 1), min = Math.min(...s.shots.map(x=>x.score), 0);
+  $('grid').innerHTML = s.shots.map((x,k)=>{ const L=x.end-x.start; const heat=Math.max(.06,(x.score-min)/(max-min||1));
+    return `<div class="shot" data-id="${x.id}">
+      <div class="im" onclick="playShot(${k})"><img loading="lazy" src="/thumb/${encodeURIComponent(x.thumb)}?v=${x.start}" alt="">
+        <span class="no">#${k+1}</span><span class="du">${L.toFixed(1)}s</span>${x.manual?'<span class="man">เพิ่มเอง</span>':''}<div class="play">▶</div></div>
+      <div class="info"><span>${tc(x.start)} → ${tc(x.end)}</span><span title="คะแนนความมันส์">🔥 ${x.score.toFixed(1)}</span></div>
+      <div class="heat"><i style="width:${(heat*100).toFixed(0)}%"></i></div>
+      <div class="acts"><button onclick="shotLen(${k},-1)" title="สั้นลง 1 วิ">−1s</button><button onclick="shotLen(${k},1)" title="ยาวขึ้น 1 วิ">+1s</button>
+        <button onclick="shotAct('replace',${k})" title="สลับเป็นช็อตอื่นที่มันส์รองลงมา">↻ สลับ</button><button class="del" onclick="shotAct('remove',${k})" title="ลบช็อตนี้">✕</button></div></div>`; }).join('')
+    || '<p class="hint">ยังไม่มีช็อต — คลิกที่กราฟเพื่อเพิ่มเอง หรือกด “คัดใหม่”</p>';
+}
+
+function renderExportSum(){
+  const done = S.sources.filter(s=>s.analyzed && s.shots.length);
+  const n = done.reduce((a,s)=>a+s.shots.length,0), t = done.reduce((a,s)=>a+s.total,0);
+  const fr = {original:'ตามต้นฉบับ','1080x1920':'Reel 9:16','1080x1080':'สี่เหลี่ยม 1:1'}[S.settings.frame];
+  const outs = [S.settings.export_reel&&'คลิปไฮไลต์', S.settings.export_shots&&'ไฟล์แยกทุกช็อต', S.settings.combine&&done.length>1&&'คลิปรวมทุกไฟล์'].filter(Boolean).join(' + ');
+  $('expSum').innerHTML = `<b>${done.length}</b> ไฟล์ · <b>${n}</b> ช็อต · รวม <b>${dur(t)}</b> · ${fr}${S.settings.enhance!=='off'?' · ✨ '+({light:'เบา',medium:'กลาง',strong:'แรง'}[S.settings.enhance]):''} · ${S.settings.audio?'มีเสียงเกม':'ภาพอย่างเดียว'}<br><span class="hint">${outs||'⚠️ ยังไม่ได้เลือกสิ่งที่จะส่งออก'}</span>`;
+}
+
+// ── inputs
+async function pickFootage(kind){ try{ const r=await api('/api/pick',{kind}); if(r.error&&r.error!=='cancel') return toast(r.error); if(r.paths.length) addSources(r.paths); }catch(e){} }
+function addPath(){ const p=$('srcPath').value.trim(); if(!p) return; addSources(p.split('\n')); $('srcPath').value=''; }
+async function addSources(paths){ try{ const r=await api('/api/sources',{paths}); S=r.state; render();
+  toast(r.added? `เพิ่มฟุตเทจ ${r.added} ไฟล์` : (r.found?'ไฟล์เหล่านี้อยู่ในรายการแล้ว':'ไม่พบไฟล์วิดีโอใน path นี้'), !!r.added); }catch(e){} }
+async function removeSrc(i){ try{ S=await api('/api/remove_source',{i}); render(); }catch(e){} }
+async function pickOut(){ try{ const r=await api('/api/pick',{kind:'output'}); if(r.paths[0]){ S=await api('/api/config',{output:r.paths[0]}); render(); } }catch(e){} }
+
+let repickT=null;
+async function setSetting(k, v){
+  S.settings[k]=v;
+  try{ S = await api('/api/config',{settings:{[k]:v}}); }catch(e){ return; }
+  render();
+  if (PICK_KEYS.includes(k) && S.sources.some(s=>s.analyzed)){ clearTimeout(repickT); repickT=setTimeout(()=>repick(true,true), 350); }
+  if (k==='enhance' && $('cmodal').classList.contains('on')) refreshCompare();
+}
+document.querySelectorAll('[data-k]').forEach(el=>{
+  el.addEventListener(el.type==='range'?'input':'change', ()=>{
+    let v = el.type==='checkbox'? el.checked : el.value;
+    if (el.type==='number'||el.type==='range') v=parseFloat(v);
+    if (el.type==='range'){ document.querySelectorAll(`[data-v="${el.dataset.k}"]`).forEach(x=>{ if(x.tagName!=='BUTTON') x.textContent=v; }); if(el.dataset.k==='target_len') $('tlenV').textContent=dur(v);
+      clearTimeout(el._t); el._t=setTimeout(()=>setSetting(el.dataset.k, v), 250); return; }
+    setSetting(el.dataset.k, v);
+  });
+});
+document.querySelectorAll('[data-seg] button').forEach(b=>b.addEventListener('click', ()=>setSetting(b.parentElement.dataset.seg, b.dataset.v)));
+document.querySelectorAll('#frames .card').forEach(c=>c.addEventListener('click', ()=>setSetting('frame', c.dataset.f)));
+
+// ── jobs
+async function analyze(){ if(!S.sources.length) return toast('เลือกฟุตเทจก่อน'); try{ await api('/api/analyze',{}); startPolling(); }catch(e){} }
+async function repick(reset, quiet){ try{ S=await api('/api/repick',{reset_rejected:!!reset}); render(); if(!quiet) toast('คัดช็อตใหม่แล้ว',true); }catch(e){} }
+async function doExport(){
+  if (!S.settings.export_reel && !S.settings.export_shots && !S.settings.combine) return toast('เลือกอย่างน้อย 1 อย่างที่จะส่งออก (ขั้นที่ 5)');
+  try{ await api('/api/export',{}); $('expDone').innerHTML=''; startPolling(); }catch(e){}
+}
+async function cancelJob(){ try{ await api('/api/cancel',{}); }catch(e){} }
+function setBusy(b){ ['goBtn','expBtn'].forEach(id=>$(id).disabled=b); $('prog').classList.toggle('hide',!b); }
+function startPolling(){
+  setBusy(true); clearInterval(polling);
+  polling = setInterval(async ()=>{
+    let j; try{ j=await api('/api/job'); }catch(e){ return; }
+    $('progStage').textContent=j.stage||'กำลังทำงาน…'; $('progBar').style.width=(j.progress*100).toFixed(1)+'%'; $('progMsg').textContent=j.message||'';
+    if (!j.running){
+      clearInterval(polling); setBusy(false);
+      if (j.error) toast(j.error);
+      else if (j.done && j.kind==='analyze'){ S=await api('/api/state'); render(); toast(`ได้ ${j.result.shots} ช็อตเด็ดจาก ${j.result.files} ไฟล์`, true); }
+      else if (j.done && j.kind==='export'){ const r=j.result;
+        $('expDone').innerHTML = `<div class="expdone">✅ ส่งออกเสร็จ — ${r.files} ไฟล์ · ${r.shots} ช็อต · รวม ${dur(r.total)}${r.combined?' · มีคลิปรวมทุกไฟล์':''} → <code>${esc(r.folder)}</code>
+          <button class="btn sm" onclick='openPath(${JSON.stringify(r.folder)})'>เปิดโฟลเดอร์</button></div>`; toast('ส่งออกเสร็จแล้ว',true); }
+    }
+  }, 400);
+}
+async function openPath(p){ try{ await api('/api/open',{path:p}); }catch(e){} }
+
+// ── shot edits
+async function shotAct(kind,k){ try{ S=await api('/api/shot/'+kind,{src:cur,id:k}); render(); if(kind==='replace') toast('สลับเป็นช็อตใหม่แล้ว',true); }catch(e){} }
+async function shotLen(k,d){ try{ S=await api('/api/shot/len',{src:cur,id:k,delta:d}); render(); }catch(e){} }
+
+// ── video preview
+let seq=null, addT=null;
+function vopen(a, caption, showAdd){
+  const v=$('vid'); const want=`/media?i=${cur}`;
+  if (!v.src.endsWith(want)) v.src=want;
+  v.onloadedmetadata=()=>{ v.currentTime=a; v.play().catch(()=>{}); };
+  if (v.readyState>=1){ v.currentTime=a; v.play().catch(()=>{}); }
+  $('vcap').innerHTML=caption; $('addHere').classList.toggle('hide',!showAdd); $('vmodal').classList.add('on');
+  v.onerror=()=>{ $('vcap').textContent='เบราว์เซอร์เล่นไฟล์ชนิดนี้ไม่ได้ (เช่น .mkv) — ไม่มีผลต่อการตัด/ส่งออก'; };
+}
+function playShot(k){ const s=S.sources[cur]; const x=s.shots[k]; seq={list:[x],i:0};
+  vopen(x.start, `ช็อต #${k+1} · <code>${tc(x.start)} → ${tc(x.end)}</code>`, false); }
+function playAll(){ const s=S.sources[cur]; if(!s.shots.length) return; seq={list:s.shots,i:0};
+  vopen(s.shots[0].start, `ไฮไลต์ ${esc(s.name)} · ช็อต 1/${s.shots.length}`, false); }
+function openAt(t){ seq=null; addT=t; vopen(Math.max(0,t-1.5), `<code>${tc(t)}</code> — กดเล่นดู แล้วกด “เพิ่ม” ตรงช่วงที่ต้องการ`, true); }
+$('vid').addEventListener('timeupdate', ()=>{
+  const v=$('vid'); if(!seq) return; const x=seq.list[seq.i];
+  if (v.currentTime >= x.end-0.03){
+    if (seq.i+1 < seq.list.length){ seq.i++; const y=seq.list[seq.i]; v.currentTime=y.start;
+      $('vcap').innerHTML = `ไฮไลต์ · ช็อต ${seq.i+1}/${seq.list.length} · <code>${tc(y.start)} → ${tc(y.end)}</code>`; }
+    else { v.pause(); seq.i=0; v.currentTime=seq.list[0].start; }
+  }
+});
+async function addHere(){ const t=$('vid').currentTime || addT; try{ S=await api('/api/shot/add',{src:cur,t}); closeV(); render(); toast(`เพิ่มช็อตที่ ${tc(t)} แล้ว`,true); }catch(e){} }
+function closeV(){ const v=$('vid'); v.pause(); $('vmodal').classList.remove('on'); seq=null; }
+
+// ── before/after
+function compareT(){ const s=S.sources[cur]; if(!s) return 0; const x=(s.shots||[])[0]; return x? x.peak : s.duration*0.3; }
+function refreshCompare(){ const s=S.sources[cur]; if(!s) return; const t=compareT();
+  $('cimg').src=`/compare?i=${cur}&t=${t.toFixed(2)}&e=${S.settings.enhance}&u=${S.settings.upscale}&f=${S.settings.frame}&_=${Date.now()}`;
+  const [W,H]=S.sizes[cur]; $('ccap').innerHTML=`${esc(s.name)} @ <code>${tc(t)}</code> · ขยาย 100% ที่ขนาดส่งออก ${W}×${H}`; }
+function openCompare(){ if(!S.sources.length) return toast('เลือกฟุตเทจก่อน'); refreshCompare(); $('cmodal').classList.add('on'); }
+function closeC(){ $('cmodal').classList.remove('on'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeV(); closeC(); } });
+
+load().catch(()=>{});
+</script>
+</body>
+</html>
